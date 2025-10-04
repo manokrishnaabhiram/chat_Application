@@ -152,9 +152,19 @@
                     </div>
                 </div>
                 <div class="chat-actions">
-                    <button class="btn-icon" title="Room Settings">
-                        <i class="fas fa-cog"></i>
-                    </button>
+                    <div class="settings-dropdown-container">
+                        <button class="btn-icon" title="Settings" onclick="toggleSettingsDropdown()">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <div class="settings-dropdown" id="settingsDropdown">
+                            <button class="settings-option" onclick="showEditProfileModal()">
+                                <i class="fas fa-user-edit"></i> Edit Profile
+                            </button>
+                            <button class="settings-option" onclick="toggleDarkTheme()">
+                                <i class="fas fa-moon"></i> Dark Theme
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -256,6 +266,48 @@
 
     <!-- Toast Notifications -->
     <div id="toastContainer" class="toast-container"></div>
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Profile</h3>
+                <button class="close-btn" onclick="closeEditProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label for="editDisplayName">Display Name</label>
+                    <input type="text" id="editDisplayName" placeholder="Enter new display name">
+                </div>
+                <div class="form-group">
+                    <label for="editAvatarUrl">Avatar URL</label>
+                    <input type="text" id="editAvatarUrl" placeholder="Enter avatar image URL">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditProfileModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Dark Theme Modal (for info) -->
+    <div id="darkThemeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Dark Theme Enabled</h3>
+                <button class="close-btn" onclick="closeDarkThemeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Dark theme is now active. You can toggle it anytime from settings.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" onclick="closeDarkThemeModal()">OK</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>

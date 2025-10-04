@@ -133,6 +133,74 @@ def index():
     """Serve the main chat interface"""
     return render_template('index.html')
 
+@app.route('/test')
+def test_settings():
+    """Test settings functionality"""
+    return '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Test</title>
+    <style>
+        .settings-dropdown {
+            display: none;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            position: absolute;
+            top: 40px;
+            right: 0;
+            z-index: 1000;
+        }
+        body.dark-theme {
+            background: #333;
+            color: white;
+        }
+        .container {
+            position: relative;
+            padding: 20px;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Settings Functionality Test</h1>
+        <button onclick="toggleSettingsDropdown()">Settings ⚙️</button>
+        <div class="settings-dropdown" id="settingsDropdown">
+            <button onclick="showEditProfile()">Edit Profile</button>
+            <button onclick="toggleDarkTheme()">Dark Theme</button>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function toggleSettingsDropdown() {
+            const dropdown = document.getElementById('settingsDropdown');
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+            document.getElementById('status').innerHTML = 'Settings dropdown toggled: ' + dropdown.style.display;
+        }
+
+        function showEditProfile() {
+            alert('Edit Profile clicked!');
+            document.getElementById('settingsDropdown').style.display = 'none';
+            document.getElementById('status').innerHTML = 'Edit Profile function called';
+        }
+
+        function toggleDarkTheme() {
+            document.body.classList.toggle('dark-theme');
+            document.getElementById('settingsDropdown').style.display = 'none';
+            const isDark = document.body.classList.contains('dark-theme');
+            document.getElementById('status').innerHTML = 'Dark theme: ' + (isDark ? 'ON' : 'OFF');
+        }
+    </script>
+</body>
+</html>'''
+
 @app.route('/api/register', methods=['POST'])
 def register():
     """User registration endpoint"""
@@ -276,6 +344,27 @@ def get_profile():
             }
         }), 200
     
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/profile', methods=['POST'])
+@token_required
+def edit_profile():
+    """Edit user profile (display_name, avatar_url)"""
+    try:
+        user = request.current_user
+        data = request.get_json()
+        display_name = data.get('display_name', '').strip()
+        avatar_url = data.get('avatar_url', '').strip()
+        update_fields = {}
+        if display_name:
+            update_fields['display_name'] = display_name
+        if avatar_url:
+            update_fields['avatar_url'] = avatar_url
+        if update_fields:
+            update_fields['updated_at'] = datetime.utcnow()
+            users_collection.update_one({'_id': user['_id']}, {'$set': update_fields})
+        return jsonify({'message': 'Profile updated successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

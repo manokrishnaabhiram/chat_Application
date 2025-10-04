@@ -44,6 +44,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Event listeners setup
 function setupEventListeners() {
+    // Settings dropdown
+    document.addEventListener('click', function(e) {
+        const dropdown = document.getElementById('settingsDropdown');
+        if (dropdown && !dropdown.contains(e.target) && !e.target.closest('.btn-icon')) {
+            dropdown.style.display = 'none';
+        }
+    });
+
+    // Edit Profile modal
+    const editProfileForm = document.getElementById('editProfileForm');
+    if (editProfileForm) {
+        editProfileForm.addEventListener('submit', handleEditProfile);
+    }
+
     // Auth forms
     loginForm.addEventListener('submit', handleLogin);
     registerForm.addEventListener('submit', handleRegister);
@@ -78,7 +92,7 @@ function setupEventListeners() {
 
     // Prevent form submission on enter for other inputs
     document.querySelectorAll('input').forEach(input => {
-        if (input.id !== 'messageInput') {
+        if (input.id !== 'messageInput' && input.id !== 'roomIdInput') {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter' && input.type !== 'submit') {
                     e.preventDefault();
@@ -86,6 +100,63 @@ function setupEventListeners() {
             });
         }
     });
+}
+
+function toggleSettingsDropdown() {
+    const dropdown = document.getElementById('settingsDropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+function showEditProfileModal() {
+    document.getElementById('editProfileModal').classList.add('active');
+    document.getElementById('settingsDropdown').style.display = 'none';
+    // Pre-fill current user info
+    document.getElementById('editDisplayName').value = currentUser.display_name || '';
+    document.getElementById('editAvatarUrl').value = currentUser.avatar_url || '';
+}
+
+function closeEditProfileModal() {
+    document.getElementById('editProfileModal').classList.remove('active');
+}
+
+async function handleEditProfile(e) {
+    e.preventDefault();
+    const displayName = document.getElementById('editDisplayName').value.trim();
+    const avatarUrl = document.getElementById('editAvatarUrl').value.trim();
+    try {
+        const response = await fetch('/api/profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ display_name: displayName, avatar_url: avatarUrl })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            currentUser.display_name = displayName;
+            currentUser.avatar_url = avatarUrl;
+            currentUserName.textContent = displayName;
+            showToast('Profile updated!', 'success');
+            closeEditProfileModal();
+        } else {
+            showToast(data.error || 'Failed to update profile', 'error');
+        }
+    } catch (error) {
+        showToast('Network error. Please try again.', 'error');
+    }
+}
+
+function toggleDarkTheme() {
+    document.body.classList.toggle('dark-theme');
+    document.getElementById('settingsDropdown').style.display = 'none';
+    if (document.body.classList.contains('dark-theme')) {
+        document.getElementById('darkThemeModal').classList.add('active');
+    }
+}
+
+function closeDarkThemeModal() {
+    document.getElementById('darkThemeModal').classList.remove('active');
 }
 
 // Authentication functions
