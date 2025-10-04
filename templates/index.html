@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime Chat Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal active">
+        <div class="modal-content">
+            <h2>Welcome to Chat App</h2>
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="showTab('login')">Login</button>
+                    <button class="tab-btn" onclick="showTab('register')">Register</button>
+                </div>
+                
+                <!-- Login Form -->
+                <div id="loginForm" class="auth-form active">
+                    <h3>Login to Your Account</h3>
+                    <form id="loginFormSubmit">
+                        <div class="form-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="loginUsername" placeholder="Username" required>
+                        </div>
+                        <div class="form-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Register Form -->
+                <div id="registerForm" class="auth-form">
+                    <h3>Create New Account</h3>
+                    <form id="registerFormSubmit">
+                        <div class="form-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="registerUsername" placeholder="Username" required>
+                        </div>
+                        <div class="form-group">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="registerEmail" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <i class="fas fa-user-tag"></i>
+                            <input type="text" id="registerDisplayName" placeholder="Display Name">
+                        </div>
+                        <div class="form-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="registerPassword" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Register
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface -->
+    <div id="chatContainer" class="chat-container" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- User Profile -->
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="currentUserName">User</div>
+                    <div class="user-status online">Online</div>
+                </div>
+                <div class="user-actions">
+                    <button class="btn-icon" onclick="logout()" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Room List -->
+            <div class="room-section">
+                <div class="section-header">
+                    <h3>Chat Rooms</h3>
+                    <button class="btn-icon" onclick="showCreateRoomModal()" title="Create Room">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="room-list" id="roomList">
+                    <!-- Public rooms will be populated here -->
+                </div>
+            </div>
+
+            <!-- Join by Room ID -->
+            <div class="room-section">
+                <div class="section-header">
+                    <h3>Join Private Room</h3>
+                </div>
+                <div class="join-room-container">
+                    <div class="form-group">
+                        <input type="text" id="roomIdInput" placeholder="Enter Room ID (8 characters)" maxlength="8" style="text-transform: uppercase;">
+                        <button class="btn-join-room" onclick="joinRoomById()" title="Join Room">
+                            <i class="fas fa-sign-in-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Private Sessions -->
+            <div class="room-section">
+                <div class="section-header">
+                    <h3>Private Sessions</h3>
+                </div>
+                <div class="room-list" id="privateRoomList">
+                    <!-- Private rooms will be populated here -->
+                </div>
+            </div>
+
+            <!-- Online Users -->
+            <div class="users-section">
+                <div class="section-header">
+                    <h3>Online Users</h3>
+                </div>
+                <div class="user-list" id="onlineUsersList">
+                    <!-- Online users will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="main-chat">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="room-info">
+                    <h2 id="currentRoomName">Select a room to start chatting</h2>
+                    <div class="room-details">
+                        <div class="room-members" id="roomMembersCount"></div>
+                        <div class="room-id-display" id="roomIdDisplay" style="display: none;">
+                            <span class="room-id-label">Room ID:</span>
+                            <span class="room-id-value" id="roomIdValue"></span>
+                            <button class="btn-copy-id" onclick="copyRoomId()" title="Copy Room ID">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="btn-icon" title="Room Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <i class="fas fa-comments"></i>
+                    <h3>Welcome to Chat App!</h3>
+                    <p>Select a room from the sidebar to start chatting</p>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span id="typingText">Someone is typing...</span>
+            </div>
+
+            <!-- Message Input -->
+            <div class="message-input-container" id="messageInputContainer" style="display: none;">
+                <div class="message-input">
+                    <input type="text" id="messageInput" placeholder="Type your message..." maxlength="1000">
+                    <button class="btn-send" id="sendButton" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="createRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Room</h3>
+                <button class="close-btn" onclick="closeCreateRoomModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="createRoomForm">
+                <div class="form-group">
+                    <label for="roomName">Room Name</label>
+                    <input type="text" id="roomName" placeholder="Enter room name" required>
+                </div>
+                <div class="form-group">
+                    <label for="roomDescription">Description (Optional)</label>
+                    <textarea id="roomDescription" placeholder="Enter room description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="roomType">Room Type</label>
+                    <select id="roomType">
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateRoomModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Room</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Room Created Success Modal -->
+    <div id="roomCreatedModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Private Room Created Successfully!</h3>
+                <button class="close-btn" onclick="closeRoomCreatedModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="room-created-content">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <p>Your private room has been created. Share this Room ID with others to invite them:</p>
+                <div class="room-id-display-large">
+                    <span class="room-id-label">Room ID:</span>
+                    <span class="room-id-value-large" id="createdRoomId"></span>
+                    <button class="btn-copy-id-large" onclick="copyCreatedRoomId()" title="Copy Room ID">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <p class="room-id-note">
+                    <i class="fas fa-info-circle"></i>
+                    Save this Room ID - others will need it to join your private room.
+                </p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" onclick="closeRoomCreatedModal()">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
